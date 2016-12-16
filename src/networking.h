@@ -5,8 +5,9 @@
 #include <functional> 
 #include <cctype>
 #include <locale>
-
-#include "ofxJSON.h"
+#include "json.hpp"
+// for convenience and compatable with future openframeworks (the current build (not the released build) has this already in it)
+using ofJson = nlohmann::json;
 #include "ofxOsc.h"
 #include "ofxNetwork.h"
 
@@ -56,8 +57,8 @@ using namespace std;
 
 	bool compress(const char*buffer, size_t len, string&output);
 	bool uncompress(const char*buffer, size_t len, string&output);
-	shared_ptr<ofxJSON> toJson(shared_ptr<ofxOscMessage>);
-	shared_ptr<ofxOscMessage> fromJson(ofxJSON &data, const string&address);
+	shared_ptr<ofJson> toJson(shared_ptr<ofxOscMessage>);
+	shared_ptr<ofxOscMessage> fromJson(ofJson &data, const string&address);
 	void getRawString(string &buffer, shared_ptr<ofxOscMessage>);
 	string getRemoteIP(shared_ptr<ofxOscMessage>m);
 	DataType mapPortToType(OurPorts port);
@@ -120,12 +121,12 @@ using namespace std;
 		void setup(const string &hostname = "192.168.1.255", int port = OurPorts::OSC);
 
 		// add a message to be sent
-		void send(ofxJSON &data, const string&address);
+		void send(ofJson &data, const string&address);
 		void send(const string&data, const string&address);
 		void send(shared_ptr<ofxOscMessage>, const string&address);
 	private:
 		void threadedFunction();
-		bool ignoreDups(shared_ptr<ofxOscMessage> p, ofxJSON &data, const string&address);
+		bool ignoreDups(shared_ptr<ofxOscMessage> p, ofJson &data, const string&address);
 		bool checkForDups = false;
 		ofxOscSender sender;
 		deque<shared_ptr<ofxOscMessage>> q;
@@ -137,7 +138,7 @@ using namespace std;
 		void setup(int port = OSC);
 
 		// caller can use the address to determine how things are sent
-		shared_ptr<ofxJSON> getJson(const string&address);
+		shared_ptr<ofJson> getJson(const string&address);
 		// returns source ip
 		string getString(string &buffer, const string&address);
 		shared_ptr<ofxOscMessage> getMessage(const string&address);
@@ -244,7 +245,7 @@ using namespace std;
 		void addTCPServer(OurPorts port = TCP, bool blocking = false);
 		bool tcpEnabled();
 		bool enabled(OurPorts port);
-		void sendOsc(ofxJSON &data, const string&address) { comms.send(data, address); }
+		void sendOsc(ofJson &data, const string&address) { comms.send(data, address); }
 		void sendOsc(const string &data, const string&address) { comms.send(data, address); }
 		void sendOsc(shared_ptr<ofxOscMessage>data, const string&address) { if (data) comms.send(data, address); }
 	private:

@@ -112,21 +112,21 @@ void getRawString(string &buffer, shared_ptr<ofxOscMessage>m) {
 	}
 	}
 
-shared_ptr<ofxJSON> toJson(shared_ptr<ofxOscMessage> m) {
+shared_ptr<ofJson> toJson(shared_ptr<ofxOscMessage> m) {
 	if (m) {
 		// bugbug data comes from one of http/s, string or local file but for now just a string
-		shared_ptr<ofxJSON> p = std::make_shared<ofxJSON>();
+		shared_ptr<ofJson> p = std::make_shared<ofJson>();
 		if (p) {
 			string output;
 			string input = m->getArgAsString(0);
 			uncompress(input.c_str(), input.size(), output);
-			p->parse(output); // uncompress returns input upon error
+			*p = output; // bugbug tie into new json/ and uncompress returns input upon error
 		}
 		return p;
 	}
 	return nullptr;
 }
-shared_ptr<ofxOscMessage> fromJson(ofxJSON &data, const string&address) {
+shared_ptr<ofxOscMessage> fromJson(ofJson &data, const string&address) {
 	shared_ptr<ofxOscMessage> p = std::make_shared<ofxOscMessage>();
 	if (p) {
 		p->setAddress(address); // use 32 bits so we can talk to everyone easiy
@@ -135,7 +135,7 @@ shared_ptr<ofxOscMessage> fromJson(ofxJSON &data, const string&address) {
 								// to ignore messages, delete old ones?
 		// even compress the small ones so more messages can use udp
 		string output;
-		string input = data.getRawString(false);
+		string input = data;
 		compress(input.c_str(), input.size(), output);
 		p->addStringArg(output); // all data is in json
 	}
@@ -160,10 +160,10 @@ void WriteOsc::threadedFunction() {
 	}
 }
 // return true to ignore messages that have been added recently
-bool WriteOsc::ignoreDups(shared_ptr<ofxOscMessage> p, ofxJSON &data, const string&address) {
+bool WriteOsc::ignoreDups(shared_ptr<ofxOscMessage> p, ofJson &data, const string&address) {
 	// only add if its not in the list already 
 	for (int i = 0; i < memory.size(); ++i) {
-		if (memory[i]->getAddress() == address && memory[i]->getArgAsString(0) == data.getRawString()) {
+		if (memory[i]->getAddress() == address && memory[i]->getArgAsString(0) == data) {
 			return true; // ignore dup
 		}
 	}
@@ -200,7 +200,7 @@ void WriteOsc::send(const string&data, const string&address) {
 }
 
 // add a message to be sent, json is default
-void WriteOsc::send(ofxJSON &data, const string&address) {
+void WriteOsc::send(ofJson &data, const string&address) {
 	if (data.size() > 0) {
 		shared_ptr<ofxOscMessage> p = fromJson(data, address);
 		if (p) {
@@ -263,8 +263,8 @@ string ReadOsc::getString(string &buffer, const string&address) {
 	unlock();
 	return sourceIP;
 }
-shared_ptr<ofxJSON> ReadOsc::getJson(const string&address) {
-	shared_ptr<ofxJSON> j = nullptr;
+shared_ptr<ofJson> ReadOsc::getJson(const string&address) {
+	shared_ptr<ofJson> j = nullptr;
 	lock();
 	if (q.size() > 0) {
 		MessageMap::iterator found = q.find(address);
