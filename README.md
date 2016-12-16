@@ -1,0 +1,2 @@
+# ofxComm
+interdevice communication layer
